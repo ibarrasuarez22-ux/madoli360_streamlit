@@ -5,4 +5,4 @@ matplotlib==3.8.4
 scikit-learn==1.5.0
 plotly==5.21.0
 chardet>=5.2.0
-scikit-learn
+scikit-learn==1.7.1
