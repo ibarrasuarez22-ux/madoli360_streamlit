@@ -12,7 +12,6 @@ from datetime import timedelta
 from sklearn.cluster import KMeans
 from google.cloud import bigquery
 from modulo_promociones import bloque_promociones_predictivas
-from modulo_api import generar_respuesta_json
 import os
 import plotly.express as px
 

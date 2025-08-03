@@ -1,78 +1,74 @@
 import streamlit as st
+import pandas as pd
 import json
 import datetime
-import pandas as pd
 from streamlit.components.v1 import html
 
-# 🔒 Layout institucional encapsulado
-def render_layout_blindado(id_cliente):
-    with st.container():
-        st.markdown(f"### 🧾 Cliente institucional: `{id_cliente}`")
+# 🔧 Configuración institucional
+st.set_page_config(
+    page_title="Madoli360 | Visualización Institucional",
+    layout="wide"
+)
 
-        col1, col2 = st.columns([1, 3])
-        with col1:
-            st.markdown("**Estado:**")
-            st.success("Activo")
+# 🧭 Captura de parámetro vía URL
+query_params = st.query_params
+id_cliente = query_params.get("id_cliente", None)
 
-        with col2:
-            st.markdown("**Segmento:**")
-            st.info("Institucional Premium")
+if not id_cliente:
+    st.error("❌ No se recibió ningún parámetro `id_cliente` en la URL. Este debe estar definido explícitamente.")
+    st.stop()
 
-        st.markdown("#### Panel predictivo")
-        st.markdown("- Tendencia de consumo 📈")
+# 📅 Timestamp institucional
+timestamp = datetime.datetime.now().isoformat()
 
-        html("""
-        <span id="ico-wrapper">
-            <i class="fas fa-shield-alt" style="font-size:24px; color:#2c3e50;"></i>
-        </span>
-        """, height=30)
+# 📄 Carga de base institucional con trazabilidad
+try:
+    df = pd.read_csv("madoli_base.csv")
+except FileNotFoundError:
+    st.error("❌ No se encontró el archivo `madoli_base.csv`. Verifique ruta y acceso.")
+    st.stop()
+except Exception as e:
+    st.error(f"❌ Error al cargar la base institucional: {e}")
+    st.stop()
 
-        st.markdown("---")
-        st.markdown("Información adicional cargada dinámicamente…")
-        st.caption("🔐 Layout auditado. Todos los componentes están encapsulados.")
+# 🔎 Validación estricta del ID
+if id_cliente not in df["id_cliente"].astype(str).values:
+    st.error(f"❌ El ID recibido (`{id_cliente}`) no existe en la base institucional.")
+    st.stop()
 
-# 🧪 Validación URL + respuesta JSON trazable
-def generar_respuesta_json():
-    # 📦 Parámetro recibido vía URL
-    query_params = st.query_params
-    id_cliente = query_params.get("id_cliente", "Desconocido")
+# 🧠 Render visual institucional sin desmontes
+with st.container():
+    st.markdown(f"### 🔒 ID validado: `{id_cliente}`")
+    st.markdown(f"📆 Timestamp institucional: `{timestamp}`")
 
-    # 📆 Timestamp institucional
-    timestamp = datetime.datetime.now().isoformat()
+    col1, col2 = st.columns([1, 3])
+    with col1:
+        st.markdown("**Estado:**")
+        st.success("Activo")
+    with col2:
+        st.markdown("**Segmento:**")
+        st.info("Institucional Premium")
 
-    # 🔍 Visualización del parámetro recibido
-    st.markdown("### 🧪 Parámetro recibido")
-    st.write(f"🔍 ID recibido por URL: `{id_cliente}`")
-    st.write(f"📆 Timestamp institucional: `{timestamp}`")
+    st.markdown("#### Panel predictivo")
+    st.markdown("- Tendencia de consumo 📈")
 
-    # 📄 Cargar base institucional
-    try:
-        df = pd.read_csv("madoli_base.csv")
-    except FileNotFoundError:
-        st.error("❌ No se encontró el archivo `madoli_base.csv`. Verifique la ruta.")
-        return
-    except Exception as e:
-        st.error(f"❌ Error al cargar la base institucional: {e}")
-        return
+    # Ícono encapsulado, estable
+    html("""
+    <span id="ico-wrapper">
+        <i class="fas fa-shield-alt" style="font-size:24px; color:#2c3e50;"></i>
+    </span>
+    """, height=30)
 
-    # 🔍 Validación de existencia del ID
-    if id_cliente not in df["id_cliente"].astype(str).values:
-        st.error(f"❌ El parámetro recibido ('{id_cliente}') no coincide con ningún ID válido en la base institucional.")
-        return
+    st.markdown("---")
+    st.caption("🔐 Todos los componentes están encapsulados y auditados.")
 
-    # 🖥️ Render visual encapsulado
-    render_layout_blindado(id_cliente)
+# 📦 Respuesta JSON lista para auditoría técnica
+respuesta = {
+    "estado": "OK",
+    "id_cliente": id_cliente,
+    "marca_de_tiempo": timestamp,
+    "mensaje": "Parámetro validado correctamente."
+}
 
-    # 📦 Respuesta JSON limpia y sin sección "contenido"
-    respuesta = {
-        "estado": "OK",
-        "id_cliente": id_cliente,
-        "marca de tiempo": timestamp,
-        "mensaje": "Parámetro validado correctamente."
-    }
-
-    # 🔐 Visualización final
-    st.markdown("### 🔐 Diseño auditado. Todos los componentes están encapsulados.")
-    st.json(respuesta)
-
-    return json.dumps(respuesta)
+st.markdown("### 📦 Respuesta JSON estructurada")
+st.json(respuesta)
