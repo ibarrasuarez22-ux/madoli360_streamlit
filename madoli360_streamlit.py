@@ -2,18 +2,16 @@
 """
 Madoli360 · Plataforma Institucional
 Autor: CCPI S.A.S. de C.V.
+Versión: 1.0.0 · Fecha de despliegue: 2025-08-03
 """
-
+import os
 import streamlit as st
 import pandas as pd
 import altair as alt
-import numpy as np
-from datetime import timedelta
-from sklearn.cluster import KMeans
-from google.cloud import bigquery
-from modulo_promociones import bloque_promociones_predictivas
-import os
 import plotly.express as px
+from mod_json import generar_respuesta_json
+from datetime import datetime
+from google.cloud import bigquery
 
 # === CONFIGURACIÓN INICIAL ===
 st.set_page_config(page_title="Madoli360", layout="wide")
@@ -172,6 +170,7 @@ with tabs[0]:
                 x='count()', y=col_product, color=col_product
             ).properties(height=300)
             st.altair_chart(graf2, use_container_width=True)
+   
 
 # === 🗂️ Perfil por Cliente ===
 with tabs[1]:
@@ -508,5 +507,5 @@ with tabs[5]:
             if original in mapa_ramos:
                 bitacora.append(f"🔄 Ramo homologado detectado: '{original}' → '{mapa_ramos[original]}'")
 
-# ✅ Activación del módulo API tipo JSON
-generar_respuesta_json()
+
+
