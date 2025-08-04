@@ -55,6 +55,28 @@ df_denue    = cargar_base("denue.csv")
 df_censo    = cargar_base("censo_inegi.csv")
 df_ventas   = cargar_base("ventas_sectoriales.csv")
 
+# === INGESTA CENSO INEGI DESDE GCS (PÚBLICO) ===
+
+URL_CENSO_PUBLICO = "https://storage.googleapis.com/madoli360-archivos/censo_inegi.csv"
+
+@st.cache_data(show_spinner="🔄 Cargando Censo INEGI desde GCS...")
+def cargar_censo_desde_gcs(url_csv: str) -> pd.DataFrame:
+    try:
+        df = pd.read_csv(url_csv)
+        bitacora.append(f"✅ Censo INEGI cargado correctamente ({df.shape[0]:,} registros)")
+        return df
+    except Exception as e:
+        st.error(f"⛔ Fallo en carga desde GCS: {e}")
+        bitacora.append(f"⛔ Error al cargar censo INEGI: {str(e)}")
+        return pd.DataFrame()
+
+# Carga institucional del censo
+df_censo = cargar_censo_desde_gcs(URL_CENSO_PUBLICO)
+
+# Blindaje estructural
+if df_censo.empty:
+    bitacora.append("⚠️ df_censo vacío tras intento de carga desde GCS.")
+
 # === NORMALIZACIÓN Y HOMOLOGACIÓN ===
 bitacora = []
 
