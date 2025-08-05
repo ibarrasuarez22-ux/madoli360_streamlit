@@ -37,7 +37,7 @@ with col_titulo:
 # === FUNCIÓN GENERAL PARA CARGA DE BASES ===
 def cargar_base(nombre_archivo):
     path_local = os.path.join(RUTA_DATOS, nombre_archivo)
-    URL_GITHUB_BASE = "https://raw.githubusercontent.com/ibarrasuarez22-ux/madoli360_streamlit/main/data/"
+    URL_GITHUB_BASE = "https://raw.githubusercontent.com/ibarrasuarez22-ux/madoli360_streamlit/main/"
     ruta_github = URL_GITHUB_BASE + nombre_archivo
 
     try:
@@ -61,6 +61,18 @@ def cargar_base(nombre_archivo):
 df_base = cargar_base("madoli_base.csv")
 df_denue = cargar_base("denue.csv")
 df_ventas = cargar_base("ventas_sectoriales.csv")
+
+if df_base.empty:
+    st.error("⛔ La base madre 'madoli_base.csv' no se cargó correctamente. No se puede continuar.")
+    st.stop()
+
+if df_denue.empty:
+    st.error("⛔ La base 'denue.csv' está vacía o falló su carga. Revisa la fuente.")
+    st.stop()
+
+if df_ventas.empty:
+    st.error("⛔ La base 'ventas_sectoriales.csv' no está disponible. Es necesaria para el módulo de análisis comercial.")
+    st.stop()
 
 # Validaciones críticas con detención inmediata
 if df_base.empty:
