@@ -59,23 +59,28 @@ df_ventas   = cargar_base("ventas_sectoriales.csv")
 
 URL_CENSO_PUBLICO = "https://storage.googleapis.com/madoli360-archivos/censo_inegi.csv"
 
-@st.cache_data(show_spinner="🔄 Cargando Censo INEGI desde GCS...")
 def cargar_censo_desde_gcs(url_csv: str) -> pd.DataFrame:
     try:
         df = pd.read_csv(url_csv)
-        bitacora.append(f"✅ Censo INEGI cargado correctamente ({df.shape[0]:,} registros)")
+        st.success(f"✅ Censo INEGI cargado correctamente ({df.shape[0]:,} registros)")
         return df
     except Exception as e:
         st.error(f"⛔ Fallo en carga desde GCS: {e}")
-        bitacora.append(f"⛔ Error al cargar censo INEGI: {str(e)}")
         return pd.DataFrame()
 
-# Carga institucional del censo
-df_censo = cargar_censo_desde_gcs(URL_CENSO_PUBLICO)
+@st.cache_data(show_spinner="🔄 Cargando Censo INEGI desde GCS...")
+def cargar_censo_cacheada(url_csv: str) -> pd.DataFrame:
+    return cargar_censo_desde_gcs(url_csv)
 
-# Blindaje estructural
-if df_censo.empty:
-    bitacora.append("⚠️ df_censo vacío tras intento de carga desde GCS.")
+# Carga institucional
+df_censo = cargar_censo_cacheada(URL_CENSO_PUBLICO)
+
+# Registro en bitácora (ya fuera de caché)
+if 'bitacora' in globals():
+    if df_censo.empty:
+        bitacora.append("⚠️ df_censo vacío tras intento de carga desde GCS.")
+    else:
+        bitacora.append(f"✅ Censo INEGI disponible ({df_censo.shape[0]:,} registros)")
 
 # === NORMALIZACIÓN Y HOMOLOGACIÓN ===
 bitacora = []
