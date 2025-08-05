@@ -42,50 +42,32 @@ def cargar_base(nombre_archivo):
 
     try:
         df = pd.read_csv(path_local, encoding="utf-8")
-        st.success(f"✅ {nombre_archivo} cargado localmente ({len(df):,} registros)")
-        bitacora.append(f"[{datetime.now()}] Base {nombre_archivo} cargada desde local")
+        bitacora.append(f"[{datetime.now()}] {nombre_archivo} cargado localmente ({len(df):,} registros)")
         return df
     except:
-        st.warning(f"⚠️ No se encontró {nombre_archivo} en local. Intentando carga desde GitHub...")
+        bitacora.append(f"[{datetime.now()}] {nombre_archivo} no encontrado en local. Intentando GitHub...")
         try:
             df = pd.read_csv(ruta_github, encoding="utf-8")
-            st.success(f"✅ {nombre_archivo} cargado desde GitHub ({len(df):,} registros)")
-            bitacora.append(f"[{datetime.now()}] Base {nombre_archivo} cargada desde GitHub")
+            bitacora.append(f"[{datetime.now()}] {nombre_archivo} cargado desde GitHub ({len(df):,} registros)")
             return df
         except Exception as e:
-            st.error(f"⛔ Error en carga de {nombre_archivo}: {str(e)}")
             bitacora.append(f"[{datetime.now()}] ERROR carga {nombre_archivo}: {str(e)}")
             return pd.DataFrame()
 
-# === CARGA Y VALIDACIÓN DE BASES CLAVE ===
+# === CARGA DE BASES CLAVE ===
 df_base = cargar_base("madoli_base.csv")
 df_denue = cargar_base("denue.csv")
 df_ventas = cargar_base("ventas_sectoriales.csv")
 
+# === VALIDACIÓN SILENCIOSA CON LOG INSTITUCIONAL ===
 if df_base.empty:
-    st.error("⛔ La base madre 'madoli_base.csv' no se cargó correctamente. No se puede continuar.")
-    st.stop()
+    bitacora.append(f"[{datetime.now()}] ERROR carga madoli_base.csv: base vacía")
 
 if df_denue.empty:
-    st.error("⛔ La base 'denue.csv' está vacía o falló su carga. Revisa la fuente.")
-    st.stop()
+    bitacora.append(f"[{datetime.now()}] ERROR carga denue.csv: base vacía")
 
 if df_ventas.empty:
-    st.error("⛔ La base 'ventas_sectoriales.csv' no está disponible. Es necesaria para el módulo de análisis comercial.")
-    st.stop()
-
-# Validaciones críticas con detención inmediata
-if df_base.empty:
-    st.error("⛔ La base madre 'madoli_base.csv' no se cargó correctamente. No se puede continuar.")
-    st.stop()
-
-if df_denue.empty:
-    st.error("⛔ La base 'denue.csv' está vacía o falló su carga. Revisa la fuente.")
-    st.stop()
-
-if df_ventas.empty:
-    st.error("⛔ La base 'ventas_sectoriales.csv' no está disponible. Es necesaria para el módulo de análisis comercial.")
-    st.stop()
+    bitacora.append(f"[{datetime.now()}] ERROR carga ventas_sectoriales.csv: base vacía")
 
 # === CARGA DE BASES ===
 def cargar_base(nombre_archivo):
@@ -113,11 +95,11 @@ URL_CENSO_PUBLICO = "https://storage.googleapis.com/madoli360-archivos/censo_ine
 
 def cargar_censo_desde_gcs(url_csv: str) -> pd.DataFrame:
     try:
-        df = pd.read_csv(url_csv)
-        st.success(f"✅ Censo INEGI cargado correctamente ({df.shape[0]:,} registros)")
-        return df
+        df_censo = pd.read_csv(url_csv, encoding="utf-8")
+        bitacora.append(f"[{datetime.now()}] Censo INEGI cargado correctamente ({len(df_censo):,} registros)")
+        return df_censo
     except Exception as e:
-        st.error(f"⛔ Fallo en carga desde GCS: {e}")
+        bitacora.append(f"[{datetime.now()}] ERROR carga Censo INEGI: {str(e)}")
         return pd.DataFrame()
 
 @st.cache_data(show_spinner="🔄 Cargando Censo INEGI desde GCS...")
