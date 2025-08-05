@@ -15,6 +15,7 @@ from google.cloud import bigquery
 
 # === CONFIGURACIÓN INICIAL ===
 st.set_page_config(page_title="Madoli360", layout="wide")
+bitacora = []
 RUTA_DATOS = "/Users/robertoibarrasuarez/Desktop/homologación_madoli/"
 CREDENCIALES_BIGQUERY = "/Users/robertoibarrasuarez/Desktop/credenciales_gcp.json"
 
@@ -33,27 +34,66 @@ with col_logo:
 with col_titulo:
     st.markdown("## 🛡️ Madoli360 – Inteligencia Institucional Predictiva")
 
+# === FUNCIÓN GENERAL PARA CARGA DE BASES ===
+def cargar_base(nombre_archivo):
+    path_local = os.path.join(RUTA_DATOS, nombre_archivo)
+    URL_GITHUB_BASE = "https://raw.githubusercontent.com/ibarrasuarez22-ux/madoli360_streamlit/main/data/"
+    ruta_github = URL_GITHUB_BASE + nombre_archivo
+
+    try:
+        df = pd.read_csv(path_local, encoding="utf-8")
+        st.success(f"✅ {nombre_archivo} cargado localmente ({len(df):,} registros)")
+        bitacora.append(f"[{datetime.now()}] Base {nombre_archivo} cargada desde local")
+        return df
+    except:
+        st.warning(f"⚠️ No se encontró {nombre_archivo} en local. Intentando carga desde GitHub...")
+        try:
+            df = pd.read_csv(ruta_github, encoding="utf-8")
+            st.success(f"✅ {nombre_archivo} cargado desde GitHub ({len(df):,} registros)")
+            bitacora.append(f"[{datetime.now()}] Base {nombre_archivo} cargada desde GitHub")
+            return df
+        except Exception as e:
+            st.error(f"⛔ Error en carga de {nombre_archivo}: {str(e)}")
+            bitacora.append(f"[{datetime.now()}] ERROR carga {nombre_archivo}: {str(e)}")
+            return pd.DataFrame()
+
+# === CARGA Y VALIDACIÓN DE BASES CLAVE ===
+df_base = cargar_base("madoli_base.csv")
+df_denue = cargar_base("denue.csv")
+df_ventas = cargar_base("ventas_sectoriales.csv")
+
+# Validaciones críticas con detención inmediata
+if df_base.empty:
+    st.error("⛔ La base madre 'madoli_base.csv' no se cargó correctamente. No se puede continuar.")
+    st.stop()
+
+if df_denue.empty:
+    st.error("⛔ La base 'denue.csv' está vacía o falló su carga. Revisa la fuente.")
+    st.stop()
+
+if df_ventas.empty:
+    st.error("⛔ La base 'ventas_sectoriales.csv' no está disponible. Es necesaria para el módulo de análisis comercial.")
+    st.stop()
+
 # === CARGA DE BASES ===
 def cargar_base(nombre_archivo):
-    path = os.path.join(RUTA_DATOS, nombre_archivo)
+    # Ruta local
+    path_local = os.path.join(RUTA_DATOS, nombre_archivo)
+
+    # Ruta GitHub
+    URL_GITHUB_BASE = "https://raw.githubusercontent.com/ibarrasuarez22-ux/madoli360_streamlit/main/data/"
+    ruta_github = URL_GITHUB_BASE + nombre_archivo
+
+    # Intento local primero
     try:
-        return pd.read_csv(path)
+        return pd.read_csv(path_local, encoding="utf-8")
     except:
-        st.error(f"⛔ No se encontró {nombre_archivo}")
-        return pd.DataFrame()
-
-def cargar_bigquery(query):
-    try:
-        client = bigquery.Client.from_service_account_json(CREDENCIALES_BIGQUERY)
-        return client.query(query).to_dataframe()
-    except Exception as e:
-        st.error(f"Error en BigQuery: {str(e)}")
-        return pd.DataFrame()
-
-df_base     = cargar_base("madoli_base.csv")
-df_denue    = cargar_base("denue.csv")
-df_censo    = cargar_base("censo_inegi.csv")
-df_ventas   = cargar_base("ventas_sectoriales.csv")
+        st.warning(f"⚠️ No se encontró {nombre_archivo} en local, intentando carga desde GitHub...")
+        try:
+            return pd.read_csv(ruta_github, encoding="utf-8")
+        except Exception as e:
+            st.error(f"⛔ Fallo doble en carga de {nombre_archivo}: {str(e)}")
+            return pd.DataFrame()
 
 # === INGESTA CENSO INEGI DESDE GCS (PÚBLICO) ===
 
